@@ -17,7 +17,7 @@ struct CodexLogFileParser: Sendable {
     mutating func parse(_ data: Data) -> [CodexLogUsageScanner.Event] {
         var events: [CodexLogUsageScanner.Event] = []
 
-        for line in data.split(separator: UInt8(ascii: "\n")) {
+        for line in JSONLStreamingReader.lines(in: data) {
             let isTurnContext = line.range(of: Self.turnContextMarker) != nil
             let isSessionMeta = !sawSessionMeta && line.range(of: Self.sessionMetaMarker) != nil
             let isTaskStarted = replayGate != nil && line.range(of: Self.taskStartedMarker) != nil

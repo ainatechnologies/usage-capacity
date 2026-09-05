@@ -69,3 +69,6 @@ continues in the background; its result is collected by a later refresh. Only on
 time, at utility priority with at most two Codex files parsed concurrently. Previously loaded history is retained while waiting. A fresh launch may therefore show quota
 before spend/history appears. Network or authentication failures still use the normal stale-data
 handling.
+
+Cold scans use byte-range newline searches to avoid per-byte Foundation iteration; record boundaries
+and the existing oversized-record safeguards are unchanged.

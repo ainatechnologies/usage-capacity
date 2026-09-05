@@ -40,6 +40,16 @@ final class CodexHistoryRefreshTests: XCTestCase {
         XCTAssertEqual(recovered, 9)
     }
 
+    func testFastLineBoundariesMatchDataSplitIncludingSlicedData() {
+        for text in ["", "\n", "one", "one\ntwo\n", "\n\none\n\ntwo", "é\n🍎\n", "a\r\nb"] {
+            let bytes = Data(text.utf8)
+            XCTAssertEqual(JSONLStreamingReader.lines(in: bytes), bytes.split(separator: UInt8(10)))
+            let prefixed = Data("prefix".utf8) + bytes
+            let slice = prefixed.dropFirst(6)
+            XCTAssertEqual(JSONLStreamingReader.lines(in: slice), slice.split(separator: UInt8(10)))
+        }
+    }
+
     func testFastScanIsIncludedInSameRefresh() async {
         let refresh = CodexHistoryRefresh<Int>()
         let value = await refresh.value(wait: .seconds(1)) { 7 }

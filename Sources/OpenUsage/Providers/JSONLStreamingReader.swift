@@ -3,6 +3,20 @@ import Foundation
 /// Reads local provider logs in bounded batches without ever materializing an entire rollout.
 /// Complete records stay together, so existing provider parsers can keep accepting JSONL `Data`.
 enum JSONLStreamingReader {
+    private static let newline = Data([UInt8(ascii: "\n")])
+
+    /// Match Data.split's nonempty-line behavior without iterating Foundation Data byte by byte.
+    static func lines(in data: Data) -> [Data.SubSequence] {
+        var lines: [Data.SubSequence] = []
+        var offset = data.startIndex
+        while offset < data.endIndex {
+            let end = data.range(of: newline, in: offset..<data.endIndex)?.lowerBound ?? data.endIndex
+            if end > offset { lines.append(data[offset..<end]) }
+            offset = end < data.endIndex ? data.index(after: end) : data.endIndex
+        }
+        return lines
+    }
+
     static let readChunkBytes = 64 * 1024
     static let maximumRecordBytes = 1024 * 1024
 
@@ -64,7 +78,7 @@ enum JSONLStreamingReader {
 
             var offset = chunk.startIndex
             while offset < chunk.endIndex {
-                let newline = chunk[offset..<chunk.endIndex].firstIndex(of: UInt8(ascii: "\n"))
+                let newline = chunk.range(of: Self.newline, in: offset..<chunk.endIndex)?.lowerBound
                 let end = newline ?? chunk.endIndex
                 let fragment = chunk[offset..<end]
 
