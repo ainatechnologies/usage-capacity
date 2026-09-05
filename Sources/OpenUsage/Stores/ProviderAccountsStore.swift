@@ -30,6 +30,7 @@ struct ProviderAccountSource: Codable, Equatable, Sendable {
     enum Kind: String, Codable, Sendable {
         /// The provider's standard home for this machine (`~/.claude`, `~/.codex`, env override).
         case defaultHome
+        case explicitHome
     }
 
     var kind: Kind
@@ -156,7 +157,7 @@ final class ProviderAccountsStore {
     /// The bare family id when free (the migration-killing rule: the first account observed at the
     /// default home IS the existing card), else an identity-derived `family@<hash8>` id.
     private static func availableID(for observation: Observation, in records: [ProviderAccountRecord]) -> String {
-        if !records.contains(where: { $0.id == observation.family }) { return observation.family }
+        if observation.sources.contains(where: \.holdsDefaultSource), !records.contains(where: { $0.id == observation.family }) { return observation.family }
         let derived = ProviderAccountID.make(family: observation.family, identityKey: observation.identityKey)
         guard records.contains(where: { $0.id == derived }) else { return derived }
         // A hash-prefix collision between two distinct identities of one family; salt until free.

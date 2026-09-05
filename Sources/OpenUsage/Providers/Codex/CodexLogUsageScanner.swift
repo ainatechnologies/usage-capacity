@@ -56,13 +56,15 @@ actor CodexLogUsageScanner {
         var reasoning: Int
         var total: Int
         var isFast: Bool = false
+        var recordedModel: String? = nil
     }
 
     /// Multi-account cards that resolve the same Codex homes share this actor and parse each rollout
     /// once. The version is the parser schema version; bump it when `Event` semantics change.
     private static let sharedScanner = IncrementalJSONLScanner<Event>(
+        maxConcurrentParses: 2,
         logTag: LogTag.plugin("codex"),
-        persistence: JSONLScanCachePersistence(namespace: "codex", schemaVersion: 3)
+        persistence: JSONLScanCachePersistence(namespace: "codex", schemaVersion: 4)
     )
 
     static func flushPersistentCacheWrites() async {
@@ -105,6 +107,15 @@ actor CodexLogUsageScanner {
             parse: { data, state in state.parse(data) }
         ), !Task.isCancelled else { return nil }
         return Self.aggregate(events: events, since: since, pricing: pricing, fallbackModel: fallbackModel)
+    }
+
+    /// Product accounting reuses the upstream parser and replay/delta guards, with no date cutoff.
+    func observedEvents(since: Date = .distantPast) async -> [Event]? {
+        let homes = codexHomes()
+        let identity = Set(homes.map { $0.resolvingSymlinksInPath().standardizedFileURL.path }).sorted().joined(separator: "\n")
+        return await scanner.items(from: Self.sessionFiles(homes: homes), since: since,
+            cacheIdentity: identity, initialState: CodexLogFileParser(),
+            parse: { data, state in state.parse(data) })
     }
 
     // MARK: - Discovery

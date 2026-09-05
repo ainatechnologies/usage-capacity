@@ -1,6 +1,6 @@
 import AppKit
 
-/// Presents the standard macOS About panel for the footer menu's "About OpenUsage" item.
+/// Presents the standard macOS About panel for the footer menu's "About Usage Capacity" item.
 ///
 /// As a menu-bar accessory app, OpenUsage is not the active app while the popover is showing, so the
 /// app is activated first — otherwise the panel would open behind whatever app currently owns the
@@ -27,7 +27,7 @@ enum AboutPanel {
         ]
 
         let credits = NSMutableAttributedString()
-        credits.append(NSAttributedString(string: "Created by ", attributes: base))
+        credits.append(NSAttributedString(string: "Usage Capacity — independent fork.\nUpstream OpenUsage created by ", attributes: base))
         credits.append(link("Robin Ebers", "https://itsbyrob.in/x", base: base))
         credits.append(NSAttributedString(string: "\nMaintained also by ", attributes: base))
         credits.append(link("Mert", "https://github.com/validatedev", base: base))

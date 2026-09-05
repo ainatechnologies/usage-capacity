@@ -57,6 +57,7 @@ final class StatusItemController: NSObject {
         // lazily at each apply, so a not-yet-configured button is harmless (same as before the split).
         self.imageUpdater = StatusItemImageUpdater(container: container) { image in
             statusItem.button?.image = image
+            statusItem.button?.setAccessibilityLabel(image.accessibilityDescription ?? ProductIdentity.name)
         }
 
         let hosting = NSHostingController(
@@ -264,7 +265,7 @@ final class StatusItemController: NSObject {
             self?.openSettings()
         })
         menu.addItem(.separator())
-        menu.addItem(ClosureMenuItem(title: "Quit OpenUsage", systemSymbol: "power", keyEquivalent: "q") {
+        menu.addItem(ClosureMenuItem(title: "Quit Usage Capacity", systemSymbol: "power", keyEquivalent: "q") {
             NSApplication.shared.terminate(nil)
         })
 

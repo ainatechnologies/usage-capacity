@@ -90,6 +90,11 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         updater.start()
     }
 
+    public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        statusItemController?.showPopover()
+        return true
+    }
+
     /// Flush queued telemetry on quit. The SDK's lifecycle autocapture is off (we emit our own daily
     /// rollups), so it won't auto-flush on termination — this explicit flush keeps low-frequency events
     /// from being stranded across a clean quit.

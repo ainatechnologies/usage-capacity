@@ -39,7 +39,7 @@ enum ProviderCatalog {
             }
         }
         providers += [
-            CodexProvider(),
+            CodexProvider(includesLocalHistory: false),
             CursorProvider(),
             AntigravityProvider(),
             CopilotProvider(defaults: defaults),
@@ -50,6 +50,7 @@ enum ProviderCatalog {
             OpenRouterProvider(),
             ZAIProvider()
         ]
+        providers += CodexProfileProvider.configured(defaults: defaults)
         return providers
     }
 }

@@ -66,10 +66,22 @@ final class StatusItemImageUpdater {
                 ?? MenuBarIcon.image
                 ?? MenuBarStripRenderer.fallbackIcon
         }
-        let content = MenuBarContentBuilder.build(
+        var content = MenuBarContentBuilder.build(
             groups: container.layout.pinnedGroups,
             data: { container.dataStore.data(for: $0) }
         )
+        // Keep the selected window understandable during the first fetch or before any successful
+        // response. Last-good values continue through upstream's cache on later failures.
+        if content.isEmpty, !container.layout.pinnedGroups.isEmpty {
+            let groups = container.layout.pinnedGroups.map { group in
+                MenuBarContent.Group(providerID: group.provider.id, displayName: group.provider.displayName,
+                    icon: group.provider.icon, metrics: group.metrics.map {
+                        MenuBarContent.Metric(id: $0.id, label: $0.metricLabel, value: "—",
+                            fraction: 0, isBounded: false, hasData: false)
+                    })
+            }
+            content = MenuBarContent(groups: groups, bars: [])
+        }
         return MenuBarStripRenderer.image(for: content, style: container.layout.menuBarStyle)
             ?? MenuBarIcon.image
             ?? MenuBarStripRenderer.fallbackIcon

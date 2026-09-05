@@ -47,6 +47,9 @@ struct DashboardContentView: View {
 
     @ViewBuilder
     private var widgetContent: some View {
+        CapacitySummaryView(snapshots: container.dataStore.snapshots.values.filter { container.enablement.isEnabled($0.providerID) },
+                            errors: Set(container.dataStore.providerErrors.keys))
+            .padding(.bottom, density.sectionSpacing)
         // The cross-provider Total Spend ring stays visible whenever the user allows it and an enabled
         // provider can track spend, even before fresh data arrives or when every metric row is hidden.
         if showTotalSpend, layout.hasSpendCapableProvider {

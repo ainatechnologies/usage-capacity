@@ -22,7 +22,7 @@ final class AppContainer {
     /// Quota pace notification preferences (three independent triggers). Drives the Settings section
     /// and is read by `WidgetDataStore.evaluateNotifications`.
     let notificationSettings: NotificationSettingsStore
-    /// Anonymous usage telemetry (mandatory daily activity and crashes, optional provider rollups).
+    /// Upstream recorder compatibility; the product sink is disabled and has no network transport.
     /// Exposed so Settings can toggle extra analytics and termination can flush queued events.
     let telemetry: TelemetryRecorder
     /// Source of truth for the popover's transparency: the persisted Increase Transparency toggle, the
@@ -79,20 +79,23 @@ final class AppContainer {
         let apiKeyProviders = providers.compactMap { $0 as? any APIKeyManaging }
         let enablement = ProviderEnablementStore()
         let notificationSettings = NotificationSettingsStore()
-        let additionalClaudeIDs = providers.map(\.provider.id).filter {
-            $0 != "claude" && ProviderAccountID.family(of: $0) == "claude"
+        let additionalAccountIDs = providers.map(\.provider.id).filter { $0.contains("@") }
+        var productIdentityKeys = accountAssembly.identityKeysByCard
+        for record in ProviderAccountsStore().records where record.sources.contains(where: { $0.kind == .explicitHome }) {
+            productIdentityKeys[record.id] = record.identityKey
         }
         let claudeAccountDefaults: ([String]) -> [String] = { metricIDs in
             metricIDs.flatMap { metricID -> [String] in
-                guard metricID.hasPrefix("claude.") else { return [metricID] }
-                let suffix = metricID.dropFirst("claude".count)
-                return [metricID] + additionalClaudeIDs.map { "\($0)\(suffix)" }
+                guard let family = metricID.split(separator: ".").first.map(String.init),
+                      ["claude", "codex"].contains(family) else { return [metricID] }
+                let suffix = metricID.dropFirst(family.count)
+                return [metricID] + additionalAccountIDs.filter { ProviderAccountID.family(of: $0) == family }.map { "\($0)\(suffix)" }
             }
         }
         let layout = LayoutStore(
             registry: registry,
             defaultMetricIDs: claudeAccountDefaults(DefaultLayout.metricIDs),
-            defaultPinnedMetricIDs: claudeAccountDefaults(DefaultLayout.pinnedMetricIDs),
+            defaultPinnedMetricIDs: ["codex.weekly"],
             defaultExpandedMetricIDs: claudeAccountDefaults(DefaultLayout.expandedMetricIDs),
             isProviderEnabled: { [enablement] in enablement.isEnabled($0) }
         )
@@ -102,7 +105,7 @@ final class AppContainer {
             isProviderEnabled: { [enablement] in enablement.isEnabled($0) },
             orderedDescriptors: { [layout] in layout.visiblePlaced.compactMap { layout.descriptor(for: $0) } },
             notificationSettings: { notificationSettings },
-            providerIdentityKeys: accountAssembly.identityKeysByCard
+            providerIdentityKeys: productIdentityKeys
         )
         let iCloudSync = ICloudUsageSyncStore(dataStore: dataStore)
         // Re-enabling a provider should fetch it promptly, so clear any leftover failure backoff before
@@ -180,14 +183,14 @@ final class AppContainer {
             )
         }
 
-        // Anonymous usage telemetry (mandatory daily activity and crashes, optional provider rollups).
+        // Upstream recorder compatibility; the product sink is disabled and has no network transport.
         // Its state lives in a dedicated UserDefaults suite, kept separate from app settings so the user's
         // optional-analytics choice and the install id stay independent of any settings change. The
         // snapshot closure reads the live layout/enablement so `app_daily_active` always reflects
         // the current configuration.
         let telemetryStore = TelemetryStore()
         let telemetry = TelemetryRecorder(
-            sink: PostHogTelemetrySink(enabled: telemetryStore.enabled),
+            sink: NoTelemetrySink(enabled: telemetryStore.enabled),
             store: telemetryStore,
             snapshot: { [registry, enablement, layout] in
                 // Report the *active* configuration: a metric whose provider is turned off is hidden
@@ -222,7 +225,7 @@ final class AppContainer {
             )
         })
         self.refreshTask = Self.startPeriodicRefresh(dataStore: dataStore, telemetry: telemetry)
-        localAPI.start()
+        if UserDefaults.standard.bool(forKey: "usagecapacity.localAPIEnabled") { localAPI.start() }
         // Become the notification-center delegate so banners show while frontmost — a menu-bar accessory
         // effectively always is. Notification authorization is requested the first time a trigger is
         // turned on in Settings, not at launch — triggers default off. No-op under tests.

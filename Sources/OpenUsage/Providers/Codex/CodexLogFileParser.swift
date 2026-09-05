@@ -10,6 +10,7 @@ struct CodexLogFileParser: Sendable {
 
     private var previousTotals: CodexLogUsageScanner.RawUsage?
     private var currentModel: String?
+    private var recordedModel: String?
     private var currentTierIsFast = false
     private var sawSessionMeta = false
     private var replayGate: ChildReplayGate?
@@ -33,6 +34,7 @@ struct CodexLogFileParser: Sendable {
             if type == "turn_context" {
                 if let model = payload.flatMap(Self.modelName(in:)) {
                     currentModel = model
+                    recordedModel = model
                 }
                 continue
             }
@@ -98,6 +100,7 @@ struct CodexLogFileParser: Sendable {
             guard usage.input > 0 || usage.cached > 0 || usage.output > 0 || usage.reasoning > 0 else { continue }
 
             let parsedModel = Self.modelName(in: payload) ?? info.flatMap(Self.modelName(in:))
+            if let parsedModel { recordedModel = parsedModel }
             let model = CodexLogUsageScanner.resolveModel(parsed: parsedModel, currentModel: &currentModel)
 
             events.append(CodexLogUsageScanner.Event(
@@ -111,7 +114,8 @@ struct CodexLogFileParser: Sendable {
                 output: usage.output,
                 reasoning: usage.reasoning,
                 total: usage.total,
-                isFast: currentTierIsFast
+                isFast: currentTierIsFast,
+                recordedModel: recordedModel
             ))
         }
         return events

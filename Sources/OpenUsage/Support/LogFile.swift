@@ -59,7 +59,7 @@ final class LogFile: @unchecked Sendable {
         // ever returned empty in an unusual container. A non-ideal-but-valid directory keeps the app alive.
         let library = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
-        return library.appendingPathComponent("Logs/OpenUsage", isDirectory: true)
+        return library.appendingPathComponent("Logs/UsageCapacity", isDirectory: true)
     }
 
     /// Create the directory and file, seed the in-memory size from disk, and perform the launch-time

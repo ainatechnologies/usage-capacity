@@ -115,7 +115,7 @@ enum MenuBarStripRenderer {
             size: NSSize(width: CGFloat(cgImage.width) / renderer.scale, height: CGFloat(cgImage.height) / renderer.scale)
         )
         image.isTemplate = true
-        image.accessibilityDescription = "OpenUsage, usage hidden while the screen is shared"
+        image.accessibilityDescription = "Usage Capacity, usage hidden while the screen is shared"
         return image
     }()
 
@@ -138,12 +138,8 @@ private struct MenuBarPrivacyLabel: View {
         HStack(spacing: 5) {
             // The same mark and inset as `MenuBarIcon` (the art carries its own margin), sized to the
             // strip's glyph box so the swap keeps the provider-glyph scale.
-            if let mark = ProviderMarks.mark(for: "openusage") {
-                ProviderIconShape(mark: mark, inset: 0.08)
-                    .fill(Color.black)
-                    .frame(width: 16, height: 16)
-            }
-            Text("OpenUsage")
+            Image(systemName: "square.stack.3d.up")
+            Text(ProductIdentity.name)
                 .font(.system(size: 12, weight: .bold))
         }
         .foregroundStyle(.black)
@@ -177,16 +173,24 @@ private struct MenuBarTextStrip: View {
     @ViewBuilder
     private func metricsView(_ metrics: [MenuBarContent.Metric]) -> some View {
         if metrics.count <= 1 {
-            Text(metrics.first?.value ?? "")
+            Text(metrics.first.map { "\(shortLabel($0.label)) \($0.value)" } ?? "")
                 .font(.system(size: 12, weight: .bold))
         } else {
             VStack(alignment: .trailing, spacing: -2) {
                 ForEach(metrics, id: \.id) { metric in
-                    Text(metric.value)
+                    Text("\(shortLabel(metric.label)) \(metric.value)")
                 }
             }
             .font(.system(size: 9, weight: .semibold))
             .fixedSize()
+        }
+    }
+
+    private func shortLabel(_ label: String) -> String {
+        switch label {
+        case "Weekly": return "W"
+        case "Session": return "S"
+        default: return String(label.prefix(8))
         }
     }
 

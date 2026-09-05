@@ -24,9 +24,9 @@ struct ShareCardChrome<Content: View>: View {
     /// The brand mark + tagline, centered at the bottom. Quiet (secondary) so it reads as a watermark.
     private var watermarkFooter: some View {
         HStack(spacing: 6) {
-            ProviderIcon(source: .providerMark("openusage"), inset: 0)
+            Image(systemName: "square.stack.3d.up")
                 .frame(width: 14, height: 14)
-            Text("Monitor Your AI Subscriptions with OpenUsage")
+            Text("Usage Capacity · Built on OpenUsage")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
         }

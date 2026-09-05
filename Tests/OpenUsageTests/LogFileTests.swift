@@ -20,7 +20,7 @@ final class LogFileTests: XCTestCase {
 
     func testResolvedPathEndsWithExpectedSuffix() {
         XCTAssertTrue(
-            LogFile.url.path.hasSuffix("Logs/OpenUsage/OpenUsage.log"),
+            LogFile.url.path.hasSuffix("Logs/UsageCapacity/OpenUsage.log"),
             "unexpected log path: \(LogFile.url.path)"
         )
     }

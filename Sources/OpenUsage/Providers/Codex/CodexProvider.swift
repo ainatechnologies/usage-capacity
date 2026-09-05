@@ -12,6 +12,7 @@ final class CodexProvider: ProviderRuntime {
         ]
     )
 
+    let includesLocalHistory: Bool
     let authStore: CodexAuthStore
     let usageClient: CodexUsageClient
     let logUsageScanner: CodexLogUsageScanner
@@ -22,6 +23,7 @@ final class CodexProvider: ProviderRuntime {
 
     init(
         authStore: CodexAuthStore = CodexAuthStore(),
+        includesLocalHistory: Bool = true,
         usageClient: CodexUsageClient = CodexUsageClient(),
         logUsageScanner: CodexLogUsageScanner = CodexLogUsageScanner(),
         openCodeUsageScanner: OpenCodeCodexUsageScanner = OpenCodeCodexUsageScanner(),
@@ -29,6 +31,7 @@ final class CodexProvider: ProviderRuntime {
         pricing: @escaping @Sendable () async -> ModelPricing = { await ModelPricingStore.shared.current() },
         fallbackModel: @escaping @MainActor () -> String? = { CodexFallbackModelSetting.current() }
     ) {
+        self.includesLocalHistory = includesLocalHistory
         self.authStore = authStore
         self.usageClient = usageClient
         self.logUsageScanner = logUsageScanner
@@ -39,7 +42,7 @@ final class CodexProvider: ProviderRuntime {
     }
 
     var widgetDescriptors: [WidgetDescriptor] {
-        [
+        let descriptors: [WidgetDescriptor] = [
             .percent(id: "codex.session", provider: provider, title: "Session")
                 .exportingLimit("session", unit: "percent"),
             .percent(id: "codex.weekly", provider: provider, title: "Weekly")
@@ -63,6 +66,7 @@ final class CodexProvider: ProviderRuntime {
                     sourceNote: "From your Codex logs (estimated)"
                 )
         ] + WidgetDescriptor.spendTiles(provider: provider)
+        return includesLocalHistory ? descriptors : descriptors.filter { !$0.isSpendTile && $0.historyResource == nil }
     }
 
     func hasLocalCredentials() async -> Bool {
@@ -142,6 +146,9 @@ final class CodexProvider: ProviderRuntime {
         )
         var mapped = try CodexUsageMapper.mapUsageResponse(response, resetCredits: resetCredits, now: now())
 
+        if !includesLocalHistory {
+            return ProviderSnapshot.make(provider: provider, plan: mapped.plan, lines: mapped.lines, refreshedAt: now())
+        }
         // Local spend tiles, scanned natively from the Codex CLI's session rollouts and priced through
         // the shared pricing store, merged with Codex usage that happened inside pi or OpenCode. Those
         // agents attribute their underlying Codex OAuth traffic back to this card.
