@@ -24,7 +24,7 @@ final class CodexProvider: ProviderRuntime {
     let fallbackModel: @MainActor () -> String?
 
     init(
-        localHistoryWait: Duration = .seconds(2),
+        localHistoryWait: Duration = .seconds(5),
         authStore: CodexAuthStore = CodexAuthStore(),
         usageClient: CodexUsageClient = CodexUsageClient(),
         logUsageScanner: CodexLogUsageScanner = CodexLogUsageScanner(),

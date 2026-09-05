@@ -63,7 +63,7 @@ Safeguards, because a claim is irreversible:
 
 ### Slow Local History
 
-Live quota refreshes wait at most two seconds for local token-history processing. If a large local
+Live quota refreshes wait at most five seconds for local token-history processing. If a large local
 archive takes longer, quota still updates and the card shows a history-updating notice. The scan
 continues in the background; its result is collected by a later refresh. Only one scan runs at a
 time, at utility priority with at most two Codex files parsed concurrently. Previously loaded history is retained while waiting. A fresh launch may therefore show quota
