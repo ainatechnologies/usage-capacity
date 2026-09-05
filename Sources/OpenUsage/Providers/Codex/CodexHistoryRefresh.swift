@@ -13,7 +13,7 @@ final class CodexHistoryRefresh<Value: Sendable> {
     func value(wait: Duration, operation: @escaping @MainActor () async -> Value) async -> Value? {
         guard !Task.isCancelled else { return nil }
         if task == nil {
-            task = Task { [weak self] in
+            task = Task(priority: .utility) { [weak self] in
                 let value = await operation()
                 guard !Task.isCancelled else { return }
                 self?.completed = value

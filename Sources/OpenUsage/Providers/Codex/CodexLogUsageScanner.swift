@@ -61,6 +61,7 @@ actor CodexLogUsageScanner {
     /// Multi-account cards that resolve the same Codex homes share this actor and parse each rollout
     /// once. The version is the parser schema version; bump it when `Event` semantics change.
     private static let sharedScanner = IncrementalJSONLScanner<Event>(
+        maxConcurrentParses: 2,
         logTag: LogTag.plugin("codex"),
         persistence: JSONLScanCachePersistence(namespace: "codex", schemaVersion: 3)
     )

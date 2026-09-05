@@ -210,6 +210,7 @@ final class CodexProvider: ProviderRuntime {
             )
         }
 
+        AppLog.info(LogTag.plugin("codex"), "local history scan completed")
         return CodexLocalHistory(lines: lines, usageHistory: usageHistory)
     }
 
